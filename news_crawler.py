@@ -20,24 +20,24 @@ class reddit_worldnews_fetcher:
             [data,new1,new2,...]
         """
         url = ("https://api.pushshift.io/reddit/search/submission"
-                "?subreddit=worldnews"
-                 "&sort_type=score"
-                f"&after={start_date}"
-                   f"&before={end_date}"
-                   "&sort=desc"
-                   "&size=25"
-                   "&fields=title")
-         page = requests.get(url)
-          print(page)
-           if page == None:
-                return None
-            content = page.json()['data']
-            news_entry = []
-            news_entry.append(dt.datetime.fromtimestamp(
-                start_date).strftime("%b %d %Y"))
-            for news in content:
-                news_entry.append(news['title'])
-            return news_entry
+               "?subreddit=worldnews"
+               "&sort_type=score"
+               f"&after={start_date}"
+               f"&before={end_date}"
+               "&sort=desc"
+               "&size=25"
+               "&fields=title")
+        page = requests.get(url)
+        print(page)
+        if page == None:
+            return None
+        content = page.json()['data']
+        news_entry = []
+        news_entry.append(dt.datetime.fromtimestamp(
+            start_date).strftime("%b %d %Y"))
+        for news in content:
+            news_entry.append(news['title'])
+        return news_entry
 
     @staticmethod
     def topnews_today():
@@ -71,3 +71,6 @@ class reddit_worldnews_fetcher:
                     csvwriter.writerow(top25news)
                 time.sleep(1)  # To avoid error 429: Too Many Requests
                 current_time = next_day
+
+
+reddit_worldnews_fetcher.historical_data('2021-2-20')
