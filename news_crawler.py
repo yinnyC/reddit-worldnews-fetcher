@@ -5,10 +5,40 @@ import csv
 import requests
 import time
 
+# -------------------------------#
+#        Global Variables        #
+# -------------------------------#
 
+CURRENTDIR = os.path.dirname(os.path.realpath(__file__))
+ONDDAY_IN_SECS = 60 * 60 * 24
+
+# -------------------------------#
+#        Helper Functions        #
+# -------------------------------#
 def to_epoch(str_time):
-    return int(dt.datetime.strptime(str_time, '%Y-%m-%d').timestamp())
+    """Take in string time(yyyy-mm-dd) and convert to epoch time."""
+    return int(dt.datetime.strptime(str_time, "%Y-%m-%d").timestamp())
 
+
+def get_today_epoch():
+    """Return epoch time of today's date."""
+    today = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
+    epoch_today_gmt = int(today.timestamp()) - ONDDAY_IN_SECS
+    return epoch_today_gmt
+
+
+def get_last_weekday_epoch(epochtime):
+    """Return the previous workday's date in epoch time."""
+    epochtime = dt.datetime.fromtimestamp(epochtime)
+    offset = max(1, (epochtime.weekday() + 6) % 7 - 3)
+    timedelta = dt.timedelta(offset)
+    most_recent = epochtime - timedelta
+    most_recent = int(most_recent.timestamp()) - ONDDAY_IN_SECS
+    return most_recent
+
+# -------------------------------#
+#    reddit_worldnews_fetcher    #
+# -------------------------------#
 
 class reddit_worldnews_fetcher:
     @staticmethod
@@ -46,13 +76,14 @@ class reddit_worldnews_fetcher:
         output:  a string of 25 top news seperated by spaces
                 'news1 news2 news3 ...'
         """
+        date = dt.datetime.combine(dt.date.today(), dt.datetime.min.time())
         today_epoch = int(date.timestamp())
         nextday_epoch = today_epoch + (60*60*24)
         top_news = self.top25news(today_epoch, nextday_epoch)
         return " ".join(top_news[1:])
 
     @staticmethod
-    def historical_data(period1, period2=str(dt.date.today())):
+    def historical_data(period1, period2=str(dt.date.today()),save_path=CURRENTDIR):
         """
         This function will fetch the top25 news of a given time span
         Input: time span. Format is yyyy-mm-dd. 
@@ -61,7 +92,7 @@ class reddit_worldnews_fetcher:
         """
         current_time = to_epoch(period1)
         period2 = to_epoch(period2)
-        with open('news.csv', mode='w') as csv_file:
+        with open(os.path.join(save_path, "news.csv"), mode="w") as csv_file:
             csvwriter = csv.writer(csv_file)
             while current_time < period2:
                 next_day = current_time + (60*60*24)
@@ -71,6 +102,7 @@ class reddit_worldnews_fetcher:
                     csvwriter.writerow(top25news)
                 time.sleep(1)  # To avoid error 429: Too Many Requests
                 current_time = next_day
+
 
 
 reddit_worldnews_fetcher.historical_data('2021-2-20')
